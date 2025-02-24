@@ -166,7 +166,7 @@
 <body>
     <!-- Update background image source to the new static image -->
     <img id="backgroundImage" src="Elements/NEW BG.png" style="display: none;">
-    <img id="nyanCat" src="Elements/nyancat avatar.gif" style="display: none;">
+    <img id="nyanCat" src="Elements/Frappy.png" style="display: none;">
     
     <!-- Audio elements -->
     <audio id="scoreSound" src="Soundeffect/scores.mp3"></audio>
@@ -187,7 +187,7 @@
     <!-- Add this HTML for the modal -->
     <div class="modal-overlay">
         <div class="modal">
-            <h2>NYAN!! NEW HIGHSCORE!!</h2>
+            <h2>BOO!! NEW HIGHSCORE!!</h2>
             <input type="text" id="playerNameInput" placeholder="Enter your name" maxlength="10">
             <div>
                 <button onclick="submitScore()">Submit</button>
@@ -223,7 +223,7 @@
             gravity: 0.5,
             jump: -8,
             width: 40,
-            height: 25
+            height: 40
         };
 
         // Pipe properties
@@ -412,12 +412,12 @@
                 ctx.fillStyle = '#000';
                 ctx.font = '32px "Press Start 2P"';
                 for(let i = 4; i >= 0; i--) {
-                    ctx.fillText('NYAN CAT', canvas.width/2 - 100 + i, canvas.height/2 - 60 + i);
+                    ctx.fillText('FRAPPY', canvas.width/2 - 80 + i, canvas.height/2 - 60 + i);
                 }
                 
                 // Title main color
-                ctx.fillStyle = '#ff69b4';  // Hot pink color for Nyan Cat theme
-                ctx.fillText('NYAN CAT', canvas.width/2 - 100, canvas.height/2 - 60);
+                ctx.fillStyle = '#fff';  // Changed from pink to white for ghost theme
+                ctx.fillText('FRAPPY', canvas.width/2 - 80, canvas.height/2 - 60);
 
                 // Flashing effect for "Press SPACE"
                 const flashingRate = Math.sin(Date.now() * 0.005) * 0.5 + 0.5;
