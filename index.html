@@ -279,13 +279,15 @@
         }
 
         function updateHighScores(newScore) {
-            if (isHighScore(newScore)) {
+            if (newScore > 0 && isHighScore(newScore)) {
                 playSound(highScoreSound);
                 showHighScoreModal(newScore);
             }
         }
 
         function isHighScore(score) {
+            if (score <= 0) return false;
+            
             return highScores.length < 5 || score > highScores[highScores.length - 1].score;
         }
 
