@@ -327,6 +327,44 @@
                 margin: 0 5px;
             }
         }
+
+        /* Add these styles in the <style> section */
+        .mobile-controls {
+            display: none;  /* Hidden by default */
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+
+        .control-button {
+            width: 40px;
+            height: 40px;
+            margin: 5px;
+            border: 3px solid #fff;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px rgba(255, 105, 180, 0.3);
+        }
+
+        .control-button.active {
+            background: #ff69b4;
+        }
+
+        /* Show controls only on mobile */
+        @media screen and (max-width: 768px) {
+            .mobile-controls {
+                display: flex;
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
@@ -387,6 +425,12 @@
         </div>
     </div>
 
+    <!-- Add this HTML right after the canvas element -->
+    <div class="mobile-controls">
+        <button class="control-button active" id="soundToggle">🔊</button>
+        <button class="control-button active" id="musicToggle">♪</button>
+    </div>
+
     <script>
         // Replace with the original initialization
         let highScores = JSON.parse(localStorage.getItem('flappyHighScores')) || [];
@@ -417,9 +461,12 @@
             y: 200,
             velocity: 0,
             gravity: 0.5,
+            initialGravity: 0.2,  // New property for initial fall
+            normalGravity: 0.5,   // Normal gravity value
             jump: -8,
             width: 40,
-            height: 40
+            height: 40,
+            hasJumped: false      // New property to track first jump
         };
 
         // Pipe properties
@@ -498,10 +545,12 @@
         function resetGame() {
             bird.y = 200;
             bird.velocity = 0;
+            bird.gravity = bird.initialGravity;  // Reset to initial gravity
+            bird.hasJumped = false;  // Reset jump state
             pipes.length = 0;
             score = 0;
             gameOver = false;
-            sparkles.length = 0;  // Clear sparkles
+            sparkles.length = 0;
             
             // Handle music on reset
             if (isMusicOn && gameStarted) {
@@ -533,6 +582,8 @@
                     resetGame();
                 } else {
                     bird.velocity = bird.jump;
+                    bird.hasJumped = true;  // Mark that the bird has jumped
+                    bird.gravity = bird.normalGravity;  // Reset to normal gravity
                 }
                 e.preventDefault();
             } else if (e.code === 'KeyM') {
@@ -590,7 +641,13 @@
             if (!gameStarted) return;  // Don't update if game hasn't started
             if (gameOver) return;
 
-            bird.velocity += bird.gravity;
+            // Apply different gravity based on whether the bird has jumped
+            if (!bird.hasJumped) {
+                bird.velocity += bird.initialGravity;
+            } else {
+                bird.velocity += bird.gravity;
+            }
+            
             bird.y += bird.velocity;
 
             if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 200) {
@@ -767,7 +824,15 @@
                     ctx.font = '24px "Press Start 2P"';
                     ctx.fillText('Game Over!', canvas.width/2 - 100, canvas.height/2);
                     ctx.font = '12px "Press Start 2P"';
-                    ctx.fillText('Press SPACE to restart', canvas.width/2 - 120, canvas.height/2 + 40);
+                    
+                    // Change restart message based on device
+                    const restartText = isMobileDevice() ? 
+                        'Tap screen to restart' : 
+                        'Press SPACE to restart';
+                    
+                    // Center the text based on its length
+                    const textWidth = ctx.measureText(restartText).width;
+                    ctx.fillText(restartText, canvas.width/2 - textWidth/2, canvas.height/2 + 40);
                 }
 
                 // Draw death particles
@@ -797,9 +862,13 @@
 
         function showHighScoreModal(score) {
             pendingScore = score;
-            modalOverlay.style.display = 'block';
+            modalOverlay.style.display = 'flex';
             playerNameInput.value = '';
-            playerNameInput.focus();
+            
+            // Only auto-focus on desktop
+            if (!isMobileDevice()) {
+                playerNameInput.focus();
+            }
         }
 
         function submitScore() {
@@ -844,6 +913,8 @@
                 resetGame();
             } else {
                 bird.velocity = bird.jump;
+                bird.hasJumped = true;  // Mark that the bird has jumped
+                bird.gravity = bird.normalGravity;  // Reset to normal gravity
             }
         }, false);
 
@@ -863,6 +934,8 @@
                 resetGame();
             } else {
                 bird.velocity = bird.jump;
+                bird.hasJumped = true;  // Mark that the bird has jumped
+                bird.gravity = bird.normalGravity;  // Reset to normal gravity
             }
         }
 
@@ -916,6 +989,55 @@
             loopMusic.pause();
             loopMusic.currentTime = 0;
         }
+
+        // Add this function to detect mobile devices
+        function isMobileDevice() {
+            return (typeof window.orientation !== "undefined") || (navigator.userAgent.indexOf('IEMobile') !== -1);
+        }
+
+        // Also update the instructions text
+        function updateInstructions() {
+            const instructionsElement = document.querySelector('.game-instructions ul');
+            const controlText = isMobileDevice() ? 'Tap screen to make Frappy jump' : 'Press SPACE to make Frappy jump';
+            
+            instructionsElement.innerHTML = `
+                <li>${controlText}</li>
+                <li>Avoid the pipes by navigating through them</li>
+                <li>Each pipe passed equals one point</li>
+                <li>Try to beat the high scores!</li>
+                <li>Press M to toggle Sound ON/OFF</li>
+                <li>Press B to toggle Music ON/OFF</li>
+            `;
+        }
+
+        // Call this when the page loads
+        updateInstructions();
+
+        // Add these functions in your JavaScript section
+        function updateButtonStates() {
+            const soundButton = document.getElementById('soundToggle');
+            const musicButton = document.getElementById('musicToggle');
+            
+            soundButton.className = `control-button ${isSoundOn ? 'active' : ''}`;
+            soundButton.innerHTML = isSoundOn ? '🔊' : '🔈';
+            
+            musicButton.className = `control-button ${isMusicOn ? 'active' : ''}`;
+            musicButton.innerHTML = isMusicOn ? '♪' : '♫';
+        }
+
+        // Add these event listeners after your other initialization code
+        document.getElementById('soundToggle').addEventListener('click', function() {
+            isSoundOn = !isSoundOn;
+            updateButtonStates();
+        });
+
+        document.getElementById('musicToggle').addEventListener('click', function() {
+            toggleMusic();
+            updateButtonStates();
+        });
+
+        // Call this initially to set the correct state
+        updateButtonStates();
     </script>
 
     <footer class="footer">
