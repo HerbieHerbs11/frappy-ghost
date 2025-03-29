@@ -338,6 +338,12 @@
     <audio id="scoreSound" src="Soundeffect/scores.mp3"></audio>
     <audio id="gameOverSound" src="Soundeffect/Game over.mp3"></audio>
     <audio id="highScoreSound" src="Soundeffect/Highscores.mp3"></audio>
+    <audio id="introMusic">
+        <source src="Soundeffect/1st music.mp3" type="audio/mp3">
+    </audio>
+    <audio id="loopMusic" loop>
+        <source src="Soundeffect/loop music.mp3" type="audio/mp3">
+    </audio>
 
     <!-- Remove the game-info div from the top -->
 
@@ -364,7 +370,8 @@
             <li>Avoid the pipes by navigating through them</li>
             <li>Each pipe passed equals one point</li>
             <li>Try to beat the high scores!</li>
-            <li>Press M to toggle sound ON/OFF</li>
+            <li>Press M to toggle Sound ON/OFF</li>
+            <li>Press B to toggle Music ON/OFF</li>
         </ul>
     </div>
 
@@ -398,6 +405,11 @@
         const gameOverSound = document.getElementById('gameOverSound');
         const highScoreSound = document.getElementById('highScoreSound');
         let isSoundOn = true;
+
+        // Add these with your other audio constants
+        const introMusic = document.getElementById('introMusic');
+        const loopMusic = document.getElementById('loopMusic');
+        let isMusicOn = true;
 
         // Update bird properties
         const bird = {
@@ -490,6 +502,13 @@
             score = 0;
             gameOver = false;
             sparkles.length = 0;  // Clear sparkles
+            
+            // Handle music on reset
+            if (isMusicOn && gameStarted) {
+                stopGameMusic();
+                playGameMusic();
+            }
+            
             update();
         }
 
@@ -504,9 +523,12 @@
 
             if (e.code === 'Space') {
                 if (!gameStarted) {
-                    // Start the game
                     gameStarted = true;
                     resetGame();
+                    // Start music when game starts
+                    if (isMusicOn) {
+                        playGameMusic();
+                    }
                 } else if (gameOver) {
                     resetGame();
                 } else {
@@ -515,6 +537,10 @@
                 e.preventDefault();
             } else if (e.code === 'KeyM') {
                 isSoundOn = !isSoundOn;
+                console.log('Sound:', isSoundOn ? 'ON' : 'OFF');  // Add this for debugging
+            } else if (e.code === 'KeyB') {
+                toggleMusic();
+                console.log('Music:', isMusicOn ? 'ON' : 'OFF');  // Add this for debugging
             }
         });
 
@@ -731,12 +757,10 @@
                     drawPipeSection(pipe.x, pipe.bottomY, canvas.height - pipe.bottomY, false);
                 });
 
-                // Draw score and sound status
+                // Draw score only (remove sound status)
                 ctx.fillStyle = 'white';
                 ctx.font = '16px "Press Start 2P"';
                 ctx.fillText(`Score: ${score}`, 10, 30);
-                ctx.font = '12px "Press Start 2P"';
-                ctx.fillText(`Sound: ${isSoundOn ? 'ON' : 'OFF'} (Press M)`, 10, canvas.height - 10);
 
                 if (gameOver) {
                     ctx.fillStyle = 'white';
@@ -830,23 +854,6 @@
             }
         }, { passive: false });
 
-        // Update keydown listener to handle both touch and keyboard
-        document.addEventListener('keydown', function(e) {
-            if (modalOverlay.style.display === 'block') {
-                if (e.key === 'Escape') {
-                    closeModal();
-                }
-                return;
-            }
-
-            if (e.code === 'Space') {
-                e.preventDefault();
-                handleJump();
-            } else if (e.code === 'KeyM') {
-                isSoundOn = !isSoundOn;
-            }
-        });
-
         // Add jump handler function
         function handleJump() {
             if (!gameStarted) {
@@ -866,6 +873,48 @@
             // Screen shake when hitting pipes
             // Fade transitions for game over
             // Particle burst on collecting points
+        }
+
+        // Add music controls
+        function toggleMusic() {
+            isMusicOn = !isMusicOn;
+            if (isMusicOn) {
+                if (gameStarted) {
+                    // If intro has already played, just start loop music
+                    if (introMusic.ended) {
+                        loopMusic.play().catch(e => console.log("Music play failed:", e));
+                    } else {
+                        playGameMusic();
+                    }
+                }
+            } else {
+                stopGameMusic();
+            }
+        }
+
+        // Add music volume control (optional)
+        introMusic.volume = 0.5;
+        loopMusic.volume = 0.5;
+
+        // Function to handle music chain
+        function playGameMusic() {
+            if (!isMusicOn) return;
+            
+            // Set up the music chain
+            introMusic.play().catch(e => console.log("Music play failed:", e));
+            
+            // When intro ends, start the loop music
+            introMusic.addEventListener('ended', () => {
+                loopMusic.play().catch(e => console.log("Music play failed:", e));
+            });
+        }
+
+        // Function to stop all music
+        function stopGameMusic() {
+            introMusic.pause();
+            introMusic.currentTime = 0;
+            loopMusic.pause();
+            loopMusic.currentTime = 0;
         }
     </script>
 
