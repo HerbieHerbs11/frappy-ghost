@@ -750,10 +750,9 @@
                 const startText = isMobileDevice() ? 'Tap screen' : 'Press SPACE';
                 const startText2 = 'to begin!';
                 
-                // Instructions with shadow
+                // Remove flashing effect and use solid white color
+                ctx.fillStyle = 'white';  // Changed from rgba with flashingRate
                 ctx.font = '16px "Press Start 2P"';
-                const flashingRate = Math.sin(Date.now() * 0.005) * 0.5 + 0.5;
-                ctx.fillStyle = `rgba(255, 255, 255, ${flashingRate})`;
                 
                 // Center the text
                 const textWidth = ctx.measureText(startText).width;
