@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <!-- Google AdSense Meta Tag -->
     <meta name="google-adsense-account" content="ca-pub-7198704920134124">
@@ -20,14 +20,14 @@
     <meta property="og:url" content="https://frappyghost.com/">
     <meta property="og:title" content="Frappy Ghost - Running Ghost With Frappe">
     <meta property="og:description" content="Play Frappy Ghost, a fun and addictive ghost adventure game. Guide your cute ghost through obstacles and try to beat the high scores!">
-    <meta property="og:image" content="Elements/Frappy.png">
+    <meta property="og:image" content="https://frappyghost.com/Elements/Thumbnail fg.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://frappyghost.com/">
     <meta property="twitter:title" content="Frappy Ghost - Running Ghost With Frappe">
     <meta property="twitter:description" content="Play Frappy Ghost, a fun and addictive ghost adventure game. Guide your cute ghost through obstacles and try to beat the high scores!">
-    <meta property="twitter:image" content="Elements/Frappy.png">
+    <meta property="twitter:image" content="https://frappyghost.com/Elements/Thumbnail fg.png">
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="Elements/Frappy.png">
@@ -193,6 +193,140 @@
         .modal button.cancel:hover {
             background: #8b1bd4;
         }
+
+        /* Remove these footer styles */
+        .footer,
+        .footer a,
+        .footer a:hover {
+            /* Delete these style blocks */
+        }
+
+        .game-instructions {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            color: white;
+            font-family: 'Press Start 2P', cursive;
+            text-align: center;
+        }
+
+        .game-instructions h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #ff69b4;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        .game-instructions ul {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            border: 4px solid #fff;
+            list-style-type: none;
+            text-align: left;
+            display: inline-block;
+        }
+
+        .game-instructions li {
+            padding: 8px 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .game-title {
+            text-align: center;
+            padding: 20px;
+            margin-top: 80px;
+            margin-bottom: -100px;  /* Adjust this to reduce space between title and game */
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .game-title h1 {
+            font-size: 48px;
+            margin: 0;
+            color: #ff69b4;
+            text-shadow: 
+                4px 4px 0px #000,
+                -2px -2px 0px #000,
+                2px -2px 0px #000,
+                -2px 2px 0px #000;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            color: #fff;
+        }
+
+        .footer a {
+            color: #ff69b4;
+            text-decoration: none;
+            margin: 0 15px;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: #ff8cc6;
+            text-decoration: underline;
+        }
+
+        .footer-divider {
+            color: rgba(255, 255, 255, 0.3);
+            margin: 0 10px;
+        }
+
+        /* Mobile optimization styles */
+        @media screen and (max-width: 768px) {
+            .game-container {
+                flex-direction: column;
+                padding-top: 10vh;
+                gap: 10px;
+            }
+
+            .game-title {
+                margin-top: 20px;
+                margin-bottom: -50px;
+            }
+
+            .game-title h1 {
+                font-size: 32px;
+            }
+
+            .high-scores {
+                width: 320px;
+                margin: 0 auto;
+            }
+
+            .game-instructions {
+                padding: 10px;
+            }
+
+            .game-instructions h2 {
+                font-size: 18px;
+            }
+
+            .game-instructions ul {
+                padding: 10px;
+            }
+
+            .game-instructions li {
+                font-size: 12px;
+            }
+
+            .footer {
+                font-size: 10px;
+                padding: 10px;
+            }
+
+            .footer a {
+                margin: 0 5px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -205,7 +339,13 @@
     <audio id="gameOverSound" src="Soundeffect/Game over.mp3"></audio>
     <audio id="highScoreSound" src="Soundeffect/Highscores.mp3"></audio>
 
-    <!-- Remove game-wrapper and ad spaces, keep only game container -->
+    <!-- Remove the game-info div from the top -->
+
+    <!-- Update the structure to put instructions below -->
+    <div class="game-title">
+        <h1>Frappy Ghost</h1>
+    </div>
+
     <div class="game-container">
         <canvas id="gameCanvas" width="320" height="480"></canvas>
         <div class="high-scores">
@@ -214,6 +354,18 @@
                 <!-- High scores will be inserted here -->
             </ul>
         </div>
+    </div>
+
+    <!-- Add instructions below the game -->
+    <div class="game-instructions">
+        <h2>How to Play</h2>
+        <ul>
+            <li>Press SPACE to make Frappy jump</li>
+            <li>Avoid the pipes by navigating through them</li>
+            <li>Each pipe passed equals one point</li>
+            <li>Try to beat the high scores!</li>
+            <li>Press M to toggle sound ON/OFF</li>
+        </ul>
     </div>
 
     <!-- Add this HTML for the modal -->
@@ -375,6 +527,39 @@
             });
         }
 
+        // Add these functions after your existing code but before the draw() function
+        let screenShakeTime = 0;
+        let screenShakeIntensity = 0;
+
+        function startScreenShake(intensity = 5, duration = 300) {
+            screenShakeTime = Date.now();
+            screenShakeIntensity = intensity;
+            setTimeout(() => {
+                screenShakeTime = 0;
+                screenShakeIntensity = 0;
+                ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+            }, duration);
+        }
+
+        // Add death particles array
+        let deathParticles = [];
+
+        function createDeathEffect() {
+            deathParticles = [];
+            // Create explosion particles
+            for(let i = 0; i < 20; i++) {
+                deathParticles.push({
+                    x: bird.x + bird.width/2,
+                    y: bird.y + bird.height/2,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    size: Math.random() * 5 + 2,
+                    opacity: 1,
+                    color: '#ff69b4'  // Pink color to match theme
+                });
+            }
+        }
+
         function update() {
             if (!gameStarted) return;  // Don't update if game hasn't started
             if (gameOver) return;
@@ -395,6 +580,8 @@
                      bird.y + bird.height > pipes[i].bottomY)) {
                     gameOver = true;
                     playSound(gameOverSound);
+                    startScreenShake();  // Add screen shake
+                    createDeathEffect(); // Add death effect
                     updateHighScores(score);
                 }
 
@@ -408,6 +595,8 @@
             if (bird.y < 0 || bird.y + bird.height > canvas.height) {
                 gameOver = true;
                 playSound(gameOverSound);
+                startScreenShake();  // Add screen shake
+                createDeathEffect(); // Add death effect
                 updateHighScores(score);
             }
 
@@ -430,11 +619,35 @@
                 }
             }
 
+            // Update death particles
+            if (gameOver) {
+                for (let i = deathParticles.length - 1; i >= 0; i--) {
+                    const particle = deathParticles[i];
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    particle.vy += 0.2; // Add gravity to particles
+                    particle.opacity -= 0.02;
+                    
+                    if (particle.opacity <= 0) {
+                        deathParticles.splice(i, 1);
+                    }
+                }
+            }
+
             draw();
             requestAnimationFrame(update);
         }
 
         function draw() {
+            ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+
+            // Apply screen shake if active
+            if (screenShakeTime > 0) {
+                const shakeX = Math.random() * screenShakeIntensity - screenShakeIntensity/2;
+                const shakeY = Math.random() * screenShakeIntensity - screenShakeIntensity/2;
+                ctx.translate(shakeX, shakeY);
+            }
+
             // Draw background
             ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 
@@ -532,6 +745,19 @@
                     ctx.font = '12px "Press Start 2P"';
                     ctx.fillText('Press SPACE to restart', canvas.width/2 - 120, canvas.height/2 + 40);
                 }
+
+                // Draw death particles
+                if (gameOver && deathParticles.length > 0) {
+                    deathParticles.forEach(particle => {
+                        ctx.save();
+                        ctx.fillStyle = particle.color;
+                        ctx.globalAlpha = particle.opacity;
+                        ctx.beginPath();
+                        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    });
+                }
             }
         }
 
@@ -582,6 +808,73 @@
                 closeModal();
             }
         });
+
+        // Add touch controls
+        canvas.addEventListener('touchstart', function(e) {
+            e.preventDefault();  // Prevent scrolling when touching the canvas
+            
+            if (!gameStarted) {
+                gameStarted = true;
+                resetGame();
+            } else if (gameOver) {
+                resetGame();
+            } else {
+                bird.velocity = bird.jump;
+            }
+        }, false);
+
+        // Add this to prevent default touch behavior
+        document.addEventListener('touchmove', function(e) {
+            if (e.target == canvas) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Update keydown listener to handle both touch and keyboard
+        document.addEventListener('keydown', function(e) {
+            if (modalOverlay.style.display === 'block') {
+                if (e.key === 'Escape') {
+                    closeModal();
+                }
+                return;
+            }
+
+            if (e.code === 'Space') {
+                e.preventDefault();
+                handleJump();
+            } else if (e.code === 'KeyM') {
+                isSoundOn = !isSoundOn;
+            }
+        });
+
+        // Add jump handler function
+        function handleJump() {
+            if (!gameStarted) {
+                gameStarted = true;
+                resetGame();
+            } else if (gameOver) {
+                resetGame();
+            } else {
+                bird.velocity = bird.jump;
+            }
+        }
+
+        // Add particle effects for collisions
+        // Add screen shake effects
+        // Add smooth transitions between states
+        function addVisualEffects() {
+            // Screen shake when hitting pipes
+            // Fade transitions for game over
+            // Particle burst on collecting points
+        }
     </script>
+
+    <footer class="footer">
+        <a href="mailto:eldorandom@gmail.com">Contact</a>
+        <span class="footer-divider">|</span>
+        <a href="https://www.facebook.com/sharer/sharer.php?u=https://frappyghost.com/" target="_blank">Facebook</a>
+        <span class="footer-divider">|</span>
+        <a href="https://twitter.com/intent/tweet?url=https://frappyghost.com/&text=Play%20Frappy%20Ghost%20-%20A%20fun%20ghost%20adventure%20game!" target="_blank">Twitter</a>
+    </footer>
 </body>
 </html>
