@@ -736,32 +736,32 @@
             ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 
             if (!gameStarted) {
-                // Draw start screen with enhanced styling
-                // Title shadow effect
+                // Draw start screen
                 ctx.fillStyle = '#000';
                 ctx.font = '32px "Press Start 2P"';
                 for(let i = 4; i >= 0; i--) {
                     ctx.fillText('FRAPPY', canvas.width/2 - 80 + i, canvas.height/2 - 60 + i);
                 }
                 
-                // Title main color
-                ctx.fillStyle = '#fff';  // Changed from pink to white for ghost theme
+                ctx.fillStyle = '#ff69b4';
                 ctx.fillText('FRAPPY', canvas.width/2 - 80, canvas.height/2 - 60);
 
-                // Flashing effect for "Press SPACE"
+                // Change instruction based on device
+                const startText = isMobileDevice() ? 'Tap screen' : 'Press SPACE';
+                const startText2 = 'to begin!';
+                
+                // Instructions with shadow
+                ctx.font = '16px "Press Start 2P"';
                 const flashingRate = Math.sin(Date.now() * 0.005) * 0.5 + 0.5;
                 ctx.fillStyle = `rgba(255, 255, 255, ${flashingRate})`;
                 
-                // Instructions with shadow
-                ctx.font = '20px "Press Start 2P"';
-                ctx.fillStyle = '#000';
-                ctx.fillText('Press SPACE', canvas.width/2 - 90 + 2, canvas.height/2 + 20 + 2);
-                ctx.fillText('to begin!', canvas.width/2 - 70 + 2, canvas.height/2 + 50 + 2);
+                // Center the text
+                const textWidth = ctx.measureText(startText).width;
+                ctx.fillText(startText, canvas.width/2 - textWidth/2, canvas.height/2 + 20);
                 
-                ctx.fillStyle = '#fff';
-                ctx.fillText('Press SPACE', canvas.width/2 - 90, canvas.height/2 + 20);
-                ctx.fillText('to begin!', canvas.width/2 - 70, canvas.height/2 + 50);
-                
+                const text2Width = ctx.measureText(startText2).width;
+                ctx.fillText(startText2, canvas.width/2 - text2Width/2, canvas.height/2 + 50);
+
                 // Draw nyan cat in center with slight bounce
                 const bounce = Math.sin(Date.now() * 0.003) * 5;
                 ctx.drawImage(birdImage, 
