@@ -563,11 +563,12 @@
 
         // Update the keydown event listener
         document.addEventListener('keydown', function(e) {
-            if (modalOverlay.style.display === 'block') {
+            // Check if modal is open (using flex instead of block)
+            if (modalOverlay.style.display === 'flex') {
                 if (e.key === 'Escape') {
                     closeModal();
                 }
-                return;
+                return;  // Stop here if modal is open
             }
 
             if (e.code === 'Space') {
@@ -582,16 +583,16 @@
                     resetGame();
                 } else {
                     bird.velocity = bird.jump;
-                    bird.hasJumped = true;  // Mark that the bird has jumped
-                    bird.gravity = bird.normalGravity;  // Reset to normal gravity
+                    bird.hasJumped = true;
+                    bird.gravity = bird.normalGravity;
                 }
                 e.preventDefault();
             } else if (e.code === 'KeyM') {
                 isSoundOn = !isSoundOn;
-                console.log('Sound:', isSoundOn ? 'ON' : 'OFF');  // Add this for debugging
+                updateButtonStates();
             } else if (e.code === 'KeyB') {
                 toggleMusic();
-                console.log('Music:', isMusicOn ? 'ON' : 'OFF');  // Add this for debugging
+                updateButtonStates();
             }
         });
 
