@@ -397,6 +397,27 @@
         }
     </style>
     <link rel="preload" href="FONT Press 2P/PressStart2P-Regular.woff2" as="font" type="font/woff2" crossorigin>
+    <!-- Add these in the <head> section -->
+    <script src="https://www.gstatic.com/firebasejs/11.5.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.5.0/firebase-database-compat.js"></script>
+
+    <script>
+      // Initialize Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyDPukoU3jTPlbXs_EzFL0tJBOJxZrJWUvk",
+        authDomain: "frappy-ghost-2261b.firebaseapp.com",
+        databaseURL: "https://frappy-ghost-2261b-default-rtdb.firebaseio.com",
+        projectId: "frappy-ghost-2261b",
+        storageBucket: "frappy-ghost-2261b.firebasestorage.app",
+        messagingSenderId: "21698071950",
+        appId: "1:21698071950:web:412557e4fc088ee58528df",
+        measurementId: "G-EJC6F5PR9F"
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
+    </script>
 </head>
 <body>
     <!-- Update background image source to the new static image -->
@@ -1125,28 +1146,6 @@
                         .join('');
                 });
         }
-    </script>
-
-    <!-- Add these right after your audio elements -->
-    <script src="https://www.gstatic.com/firebasejs/11.5.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.5.0/firebase-database-compat.js"></script>
-
-    <script>
-      // Initialize Firebase
-      const firebaseConfig = {
-        apiKey: "AIzaSyDPukoU3jTPlbXs_EzFL0tJBOJxZrJWUvk",
-        authDomain: "frappy-ghost-2261b.firebaseapp.com",
-        databaseURL: "https://frappy-ghost-2261b-default-rtdb.firebaseio.com",
-        projectId: "frappy-ghost-2261b",
-        storageBucket: "frappy-ghost-2261b.firebasestorage.app",
-        messagingSenderId: "21698071950",
-        appId: "1:21698071950:web:412557e4fc088ee58528df",
-        measurementId: "G-EJC6F5PR9F"
-      };
-
-      // Initialize Firebase
-      firebase.initializeApp(firebaseConfig);
-      const db = firebase.database();
     </script>
 
     <footer class="footer">
