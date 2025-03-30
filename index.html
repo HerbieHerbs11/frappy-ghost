@@ -417,18 +417,6 @@
       // Initialize Firebase
       firebase.initializeApp(firebaseConfig);
       const db = firebase.database();
-
-      // Add this temporarily after your Firebase initialization to test the connection
-      const testRef = firebase.database().ref('scores');
-      testRef.push({
-          name: "Test",
-          score: 1,
-          timestamp: Date.now()
-      }).then(() => {
-          console.log("Firebase connection successful!");
-      }).catch((error) => {
-          console.error("Firebase connection failed:", error);
-      });
     </script>
 </head>
 <body>
@@ -642,7 +630,8 @@
             const scoresRef = firebase.database().ref('scores');
             scoresRef.orderByChild('score')
                 .limitToLast(5)
-                .on('value', (snapshot) => {
+                .once('value')
+                .then((snapshot) => {
                     const scores = [];
                     snapshot.forEach((childSnapshot) => {
                         scores.unshift(childSnapshot.val());
@@ -657,6 +646,11 @@
                             <li>${index + 1}. ${score.name}: ${score.score}</li>
                         `)
                         .join('');
+                })
+                .catch(error => {
+                    console.error("Error loading scores:", error);
+                    // Show a fallback message if loading fails
+                    scoreList.innerHTML = '<li>Unable to load global scores</li>';
                 });
         }
 
@@ -676,11 +670,13 @@
                     name: playerName,
                     score: pendingScore,
                     timestamp: Date.now()
+                }).then(() => {
+                    displayHighScores();
+                    modalOverlay.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                }).catch(error => {
+                    console.error("Error saving score:", error);
                 });
-
-                displayHighScores();
-                modalOverlay.style.display = 'none';
-                document.body.style.overflow = 'auto'; // Re-enable scrolling
             }
         }
 
