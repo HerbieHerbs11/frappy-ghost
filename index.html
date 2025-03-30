@@ -417,6 +417,18 @@
       // Initialize Firebase
       firebase.initializeApp(firebaseConfig);
       const db = firebase.database();
+
+      // Add this temporarily after your Firebase initialization to test the connection
+      const testRef = firebase.database().ref('scores');
+      testRef.push({
+          name: "Test",
+          score: 1,
+          timestamp: Date.now()
+      }).then(() => {
+          console.log("Firebase connection successful!");
+      }).catch((error) => {
+          console.error("Firebase connection failed:", error);
+      });
     </script>
 </head>
 <body>
@@ -590,6 +602,89 @@
             return highScores.length < 5 || score > highScores[highScores.length - 1].score;
         }
 
+        // Add these variables at the top with your other variables
+        let currentScoreView = 'local';
+
+        // Add these with your other variables at the top
+        const modalOverlay = document.querySelector('.modal-overlay');
+        const playerNameInput = document.getElementById('playerNameInput');
+        let pendingScore = 0;
+
+        function showHighScoreModal(score) {
+            pendingScore = score;
+            modalOverlay.style.display = 'flex';
+            playerNameInput.value = '';
+            
+            // Only auto-focus on desktop
+            if (!isMobileDevice()) {
+                playerNameInput.focus();
+            }
+            // Prevent scrolling of background when modal is open
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Add these new functions
+        function showLocalScores() {
+            currentScoreView = 'local';
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.tab-button:first-child').classList.add('active');
+            displayHighScores();
+        }
+
+        function showGlobalScores() {
+            currentScoreView = 'global';
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.tab-button:last-child').classList.add('active');
+            loadGlobalScores();
+        }
+
+        function loadGlobalScores() {
+            const scoresRef = firebase.database().ref('scores');
+            scoresRef.orderByChild('score')
+                .limitToLast(5)
+                .on('value', (snapshot) => {
+                    const scores = [];
+                    snapshot.forEach((childSnapshot) => {
+                        scores.unshift(childSnapshot.val());
+                    });
+                    
+                    // Sort scores in descending order
+                    scores.sort((a, b) => b.score - a.score);
+                    
+                    const scoreList = document.getElementById('scoreList');
+                    scoreList.innerHTML = scores
+                        .map((score, index) => `
+                            <li>${index + 1}. ${score.name}: ${score.score}</li>
+                        `)
+                        .join('');
+                });
+        }
+
+        // Update the submitScore function
+        function submitScore() {
+            const playerName = playerNameInput.value.trim() || 'Ghost';
+            if (pendingScore > 0) {
+                // Save to local storage
+                highScores.push({ name: playerName, score: pendingScore });
+                highScores.sort((a, b) => b.score - a.score);
+                highScores = highScores.slice(0, 5);
+                localStorage.setItem('flappyHighScores', JSON.stringify(highScores));
+
+                // Save to Firebase
+                const scoresRef = firebase.database().ref('scores');
+                scoresRef.push({
+                    name: playerName,
+                    score: pendingScore,
+                    timestamp: Date.now()
+                });
+
+                displayHighScores();
+                modalOverlay.style.display = 'none';
+                document.body.style.overflow = 'auto'; // Re-enable scrolling
+            }
+        }
+
+        // Update your existing displayHighScores function
         function displayHighScores() {
             const scoreList = document.getElementById('scoreList');
             if (currentScoreView === 'local') {
@@ -603,70 +698,7 @@
             }
         }
 
-        function resetGame() {
-            bird.y = 200;
-            bird.velocity = 0;
-            bird.gravity = bird.initialGravity;  // Reset to initial gravity
-            bird.hasJumped = false;  // Reset jump state
-            pipes.length = 0;
-            score = 0;
-            gameOver = false;
-            sparkles.length = 0;
-            
-            // Handle music on reset
-            if (isMusicOn && gameStarted) {
-                stopGameMusic();
-                playGameMusic();
-            }
-            
-            update();
-        }
-
-        // Update the keydown event listener
-        document.addEventListener('keydown', function(e) {
-            // Check if modal is open (using flex instead of block)
-            if (modalOverlay.style.display === 'flex') {
-                if (e.key === 'Escape') {
-                    closeModal();
-                }
-                return;  // Stop here if modal is open
-            }
-
-            if (e.code === 'Space') {
-                if (!gameStarted) {
-                    gameStarted = true;
-                    resetGame();
-                    // Start music when game starts
-                    if (isMusicOn) {
-                        playGameMusic();
-                    }
-                } else if (gameOver) {
-                    resetGame();
-                } else {
-                    bird.velocity = bird.jump;
-                    bird.hasJumped = true;
-                    bird.gravity = bird.normalGravity;
-                }
-                e.preventDefault();
-            } else if (e.code === 'KeyM') {
-                isSoundOn = !isSoundOn;
-                updateButtonStates();
-            } else if (e.code === 'KeyB') {
-                toggleMusic();
-                updateButtonStates();
-            }
-        });
-
-        function createPipe() {
-            const gapPosition = Math.random() * (canvas.height - PIPE_GAP);
-            pipes.push({
-                x: canvas.width,
-                topHeight: gapPosition,
-                bottomY: gapPosition + PIPE_GAP
-            });
-        }
-
-        // Add these functions after your existing code but before the draw() function
+        // Add this after the other constant declarations
         let screenShakeTime = 0;
         let screenShakeIntensity = 0;
 
@@ -697,6 +729,173 @@
                     color: '#ff69b4'  // Pink color to match theme
                 });
             }
+        }
+
+        // Update the closeModal function
+        function closeModal() {
+            modalOverlay.style.display = 'none';
+            // Re-enable scrolling when modal is closed
+            document.body.style.overflow = 'auto';
+        }
+
+        // Update the canvas touch event listener
+        canvas.addEventListener('touchstart', function(e) {
+            e.preventDefault();  // Prevent scrolling when touching the canvas
+            
+            if (!gameStarted) {
+                gameStarted = true;
+                resetGame();
+                // Add this line to start music on first touch
+                if (isMusicOn) {
+                    playGameMusic();
+                }
+            } else if (gameOver) {
+                resetGame();
+            } else {
+                bird.velocity = bird.jump;
+                bird.hasJumped = true;
+                bird.gravity = bird.normalGravity;
+            }
+        }, false);
+
+        // Add this to prevent default touch behavior
+        document.addEventListener('touchmove', function(e) {
+            if (e.target == canvas) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Add jump handler function
+        function handleJump() {
+            if (!gameStarted) {
+                gameStarted = true;
+                resetGame();
+            } else if (gameOver) {
+                resetGame();
+            } else {
+                bird.velocity = bird.jump;
+                bird.hasJumped = true;
+                bird.gravity = bird.normalGravity;
+            }
+        }
+
+        // Add particle effects for collisions
+        // Add screen shake effects
+        // Add smooth transitions between states
+        function addVisualEffects() {
+            // Screen shake when hitting pipes
+            // Fade transitions for game over
+            // Particle burst on collecting points
+        }
+
+        // Add music controls
+        function toggleMusic() {
+            isMusicOn = !isMusicOn;
+            if (isMusicOn) {
+                if (gameStarted) {
+                    // If intro has already played, just start loop music
+                    if (introMusic.ended) {
+                        loopMusic.play().catch(e => console.log("Music play failed:", e));
+                    } else {
+                        playGameMusic();
+                    }
+                }
+            } else {
+                stopGameMusic();
+            }
+        }
+
+        // Add music volume control (optional)
+        introMusic.volume = 0.5;
+        loopMusic.volume = 0.5;
+
+        // Function to handle music chain
+        function playGameMusic() {
+            if (!isMusicOn) return;
+            
+            // Set up the music chain
+            introMusic.play().catch(e => console.log("Music play failed:", e));
+            
+            // When intro ends, start the loop music
+            introMusic.addEventListener('ended', () => {
+                loopMusic.play().catch(e => console.log("Music play failed:", e));
+            });
+        }
+
+        // Function to stop all music
+        function stopGameMusic() {
+            introMusic.pause();
+            introMusic.currentTime = 0;
+            loopMusic.pause();
+            loopMusic.currentTime = 0;
+        }
+
+        // Add this function to detect mobile devices
+        function isMobileDevice() {
+            return (typeof window.orientation !== "undefined") || (navigator.userAgent.indexOf('IEMobile') !== -1);
+        }
+
+        // Also update the instructions text
+        function updateInstructions() {
+            const instructionsElement = document.querySelector('.game-instructions ul');
+            const controlText = isMobileDevice() ? 'Tap screen to make Frappy jump' : 'Press SPACE to make Frappy jump';
+            
+            instructionsElement.innerHTML = `
+                <li>${controlText}</li>
+                <li>Avoid the pipes by navigating through them</li>
+                <li>Each pipe passed equals one point</li>
+                <li>Try to beat the high scores!</li>
+                <li>Press M to toggle Sound ON/OFF</li>
+                <li>Press B to toggle Music ON/OFF</li>
+            `;
+        }
+
+        // Call this when the page loads
+        updateInstructions();
+
+        // Add these functions in your JavaScript section
+        function updateButtonStates() {
+            const soundButton = document.getElementById('soundToggle');
+            const musicButton = document.getElementById('musicToggle');
+            
+            soundButton.className = `control-button ${isSoundOn ? 'active' : ''}`;
+            soundButton.innerHTML = isSoundOn ? '🔊' : '🔈';
+            
+            musicButton.className = `control-button ${isMusicOn ? 'active' : ''}`;
+            musicButton.innerHTML = isMusicOn ? '♪' : '♫';
+        }
+
+        // Add these event listeners after your other initialization code
+        document.getElementById('soundToggle').addEventListener('click', function() {
+            isSoundOn = !isSoundOn;
+            updateButtonStates();
+        });
+
+        document.getElementById('musicToggle').addEventListener('click', function() {
+            toggleMusic();
+            updateButtonStates();
+        });
+
+        // Call this initially to set the correct state
+        updateButtonStates();
+
+        function resetGame() {
+            bird.y = 200;
+            bird.velocity = 0;
+            bird.gravity = bird.initialGravity;  // Reset to initial gravity
+            bird.hasJumped = false;  // Reset jump state
+            pipes.length = 0;
+            score = 0;
+            gameOver = false;
+            sparkles.length = 0;
+            
+            // Handle music on reset
+            if (isMusicOn && gameStarted) {
+                stopGameMusic();
+                playGameMusic();
+            }
+            
+            update();
         }
 
         function update() {
@@ -915,237 +1114,6 @@
         displayHighScores();
         update();
         requestAnimationFrame(draw);  // Keep drawing even when game hasn't started
-
-        // Add these functions
-        const modalOverlay = document.querySelector('.modal-overlay');
-        const playerNameInput = document.getElementById('playerNameInput');
-        let pendingScore = 0;
-
-        function showHighScoreModal(score) {
-            pendingScore = score;
-            modalOverlay.style.display = 'flex';
-            playerNameInput.value = '';
-            
-            // Only auto-focus on desktop
-            if (!isMobileDevice()) {
-                playerNameInput.focus();
-            }
-
-            // Prevent scrolling of background when modal is open
-            document.body.style.overflow = 'hidden';
-        }
-
-        function submitScore() {
-            const playerName = playerNameInput.value.trim() || 'Ghost';
-            if (pendingScore > 0) {
-                // Save to local storage
-                highScores.push({ name: playerName, score: pendingScore });
-                highScores.sort((a, b) => b.score - a.score);
-                highScores = highScores.slice(0, 5);
-                localStorage.setItem('flappyHighScores', JSON.stringify(highScores));
-
-                // Save to Firebase
-                db.ref('scores').push({
-                    name: playerName,
-                    score: pendingScore,
-                    timestamp: Date.now()
-                });
-
-                displayHighScores();
-                modalOverlay.style.display = 'none';
-            }
-        }
-
-        // Add event listener for Enter key
-        playerNameInput.addEventListener('keyup', function(event) {
-            if (event.key === 'Enter') {
-                submitScore();
-            }
-        });
-
-        // Update the closeModal function
-        function closeModal() {
-            modalOverlay.style.display = 'none';
-            // Re-enable scrolling when modal is closed
-            document.body.style.overflow = 'auto';
-        }
-
-        // Update the canvas touch event listener
-        canvas.addEventListener('touchstart', function(e) {
-            e.preventDefault();  // Prevent scrolling when touching the canvas
-            
-            if (!gameStarted) {
-                gameStarted = true;
-                resetGame();
-                // Add this line to start music on first touch
-                if (isMusicOn) {
-                    playGameMusic();
-                }
-            } else if (gameOver) {
-                resetGame();
-            } else {
-                bird.velocity = bird.jump;
-                bird.hasJumped = true;
-                bird.gravity = bird.normalGravity;
-            }
-        }, false);
-
-        // Add this to prevent default touch behavior
-        document.addEventListener('touchmove', function(e) {
-            if (e.target == canvas) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-
-        // Add jump handler function
-        function handleJump() {
-            if (!gameStarted) {
-                gameStarted = true;
-                resetGame();
-            } else if (gameOver) {
-                resetGame();
-            } else {
-                bird.velocity = bird.jump;
-                bird.hasJumped = true;
-                bird.gravity = bird.normalGravity;
-            }
-        }
-
-        // Add particle effects for collisions
-        // Add screen shake effects
-        // Add smooth transitions between states
-        function addVisualEffects() {
-            // Screen shake when hitting pipes
-            // Fade transitions for game over
-            // Particle burst on collecting points
-        }
-
-        // Add music controls
-        function toggleMusic() {
-            isMusicOn = !isMusicOn;
-            if (isMusicOn) {
-                if (gameStarted) {
-                    // If intro has already played, just start loop music
-                    if (introMusic.ended) {
-                        loopMusic.play().catch(e => console.log("Music play failed:", e));
-                    } else {
-                        playGameMusic();
-                    }
-                }
-            } else {
-                stopGameMusic();
-            }
-        }
-
-        // Add music volume control (optional)
-        introMusic.volume = 0.5;
-        loopMusic.volume = 0.5;
-
-        // Function to handle music chain
-        function playGameMusic() {
-            if (!isMusicOn) return;
-            
-            // Set up the music chain
-            introMusic.play().catch(e => console.log("Music play failed:", e));
-            
-            // When intro ends, start the loop music
-            introMusic.addEventListener('ended', () => {
-                loopMusic.play().catch(e => console.log("Music play failed:", e));
-            });
-        }
-
-        // Function to stop all music
-        function stopGameMusic() {
-            introMusic.pause();
-            introMusic.currentTime = 0;
-            loopMusic.pause();
-            loopMusic.currentTime = 0;
-        }
-
-        // Add this function to detect mobile devices
-        function isMobileDevice() {
-            return (typeof window.orientation !== "undefined") || (navigator.userAgent.indexOf('IEMobile') !== -1);
-        }
-
-        // Also update the instructions text
-        function updateInstructions() {
-            const instructionsElement = document.querySelector('.game-instructions ul');
-            const controlText = isMobileDevice() ? 'Tap screen to make Frappy jump' : 'Press SPACE to make Frappy jump';
-            
-            instructionsElement.innerHTML = `
-                <li>${controlText}</li>
-                <li>Avoid the pipes by navigating through them</li>
-                <li>Each pipe passed equals one point</li>
-                <li>Try to beat the high scores!</li>
-                <li>Press M to toggle Sound ON/OFF</li>
-                <li>Press B to toggle Music ON/OFF</li>
-            `;
-        }
-
-        // Call this when the page loads
-        updateInstructions();
-
-        // Add these functions in your JavaScript section
-        function updateButtonStates() {
-            const soundButton = document.getElementById('soundToggle');
-            const musicButton = document.getElementById('musicToggle');
-            
-            soundButton.className = `control-button ${isSoundOn ? 'active' : ''}`;
-            soundButton.innerHTML = isSoundOn ? '🔊' : '🔈';
-            
-            musicButton.className = `control-button ${isMusicOn ? 'active' : ''}`;
-            musicButton.innerHTML = isMusicOn ? '♪' : '♫';
-        }
-
-        // Add these event listeners after your other initialization code
-        document.getElementById('soundToggle').addEventListener('click', function() {
-            isSoundOn = !isSoundOn;
-            updateButtonStates();
-        });
-
-        document.getElementById('musicToggle').addEventListener('click', function() {
-            toggleMusic();
-            updateButtonStates();
-        });
-
-        // Call this initially to set the correct state
-        updateButtonStates();
-
-        // Add these variables at the top of your script
-        let currentScoreView = 'local';
-
-        // Add these new functions
-        function showLocalScores() {
-            currentScoreView = 'local';
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelector('.tab-button:first-child').classList.add('active');
-            displayHighScores();
-        }
-
-        function showGlobalScores() {
-            currentScoreView = 'global';
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelector('.tab-button:last-child').classList.add('active');
-            loadGlobalScores();
-        }
-
-        function loadGlobalScores() {
-            const scoresRef = db.ref('scores');
-            scoresRef.orderByChild('score')
-                .limitToLast(5)
-                .on('value', (snapshot) => {
-                    const scores = [];
-                    snapshot.forEach((childSnapshot) => {
-                        scores.unshift(childSnapshot.val());
-                    });
-                    
-                    scoreList.innerHTML = scores
-                        .map((score, index) => `
-                            <li>${index + 1}. ${score.name}: ${score.score}</li>
-                        `)
-                        .join('');
-                });
-        }
     </script>
 
     <footer class="footer">
