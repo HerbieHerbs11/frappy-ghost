@@ -374,6 +374,27 @@
             font-weight: normal;
             font-style: normal;
         }
+
+        .score-tabs {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
+        }
+
+        .tab-button {
+            font-family: 'Press Start 2P', cursive;
+            padding: 8px 15px;
+            margin: 0 5px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #fff;
+            color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .tab-button.active {
+            background: #ff69b4;
+        }
     </style>
     <link rel="preload" href="FONT Press 2P/PressStart2P-Regular.woff2" as="font" type="font/woff2" crossorigin>
 </head>
@@ -404,8 +425,12 @@
         <canvas id="gameCanvas" width="320" height="480"></canvas>
         <div class="high-scores">
             <h2>Top 5 High Scores</h2>
+            <div class="score-tabs">
+                <button class="tab-button active" onclick="showLocalScores()">Local</button>
+                <button class="tab-button" onclick="showGlobalScores()">Global</button>
+            </div>
             <ul id="scoreList" class="score-list">
-                <!-- High scores will be inserted here -->
+                <!-- Scores will be inserted here -->
             </ul>
         </div>
     </div>
@@ -440,6 +465,39 @@
         <button class="control-button active" id="soundToggle">🔊</button>
         <button class="control-button active" id="musicToggle">♪</button>
     </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-analytics.js";
+      import { getDatabase, ref, push, onValue, query, orderByChild, limitToLast } 
+        from "https://www.gstatic.com/firebasejs/11.5.0/firebase-database.js";
+
+      // Initialize Firebase first
+      const firebaseConfig = {
+        apiKey: "AIzaSyDPukoU3jTPlbXs_EzFL0tJBOJxZrJWUvk",
+        authDomain: "frappy-ghost-2261b.firebaseapp.com",
+        databaseURL: "https://frappy-ghost-2261b-default-rtdb.firebaseio.com",
+        projectId: "frappy-ghost-2261b",
+        storageBucket: "frappy-ghost-2261b.firebasestorage.app",
+        messagingSenderId: "21698071950",
+        appId: "1:21698071950:web:412557e4fc088ee58528df",
+        measurementId: "G-EJC6F5PR9F"
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
+      const db = getDatabase(app);
+
+      // Make Firebase instances available globally
+      window.db = db;
+      window.dbRef = ref;
+      window.dbPush = push;
+      window.dbQuery = query;
+      window.dbOrderByChild = orderByChild;
+      window.dbLimitToLast = limitToLast;
+      window.dbOnValue = onValue;
+    </script>
 
     <script>
         // Replace with the original initialization
@@ -545,11 +603,16 @@
         }
 
         function displayHighScores() {
-            scoreList.innerHTML = highScores
-                .map((score, index) => `
-                    <li>${index + 1}. ${score.name}: ${score.score}</li>
-                `)
-                .join('');
+            const scoreList = document.getElementById('scoreList');
+            if (currentScoreView === 'local') {
+                scoreList.innerHTML = highScores
+                    .map((score, index) => `
+                        <li>${index + 1}. ${score.name}: ${score.score}</li>
+                    `)
+                    .join('');
+            } else {
+                loadGlobalScores();
+            }
         }
 
         function resetGame() {
@@ -885,12 +948,22 @@
         }
 
         function submitScore() {
-            const playerName = playerNameInput.value.trim();
-            if (playerName) {
+            const playerName = playerNameInput.value.trim() || 'Ghost';
+            if (pendingScore > 0) {
+                // Save to local storage
                 highScores.push({ name: playerName, score: pendingScore });
                 highScores.sort((a, b) => b.score - a.score);
                 highScores = highScores.slice(0, 5);
                 localStorage.setItem('flappyHighScores', JSON.stringify(highScores));
+
+                // Save to Firebase
+                const scoresRef = dbRef(db, 'scores');
+                dbPush(scoresRef, {
+                    name: playerName,
+                    score: pendingScore,
+                    timestamp: Date.now()
+                });
+
                 displayHighScores();
                 modalOverlay.style.display = 'none';
             }
@@ -1050,6 +1123,46 @@
 
         // Call this initially to set the correct state
         updateButtonStates();
+
+        // Add these variables at the top of your script
+        let currentScoreView = 'local';
+
+        // Add these new functions
+        function showLocalScores() {
+            currentScoreView = 'local';
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.tab-button:first-child').classList.add('active');
+            displayHighScores();
+        }
+
+        function showGlobalScores() {
+            currentScoreView = 'global';
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.tab-button:last-child').classList.add('active');
+            loadGlobalScores();
+        }
+
+        function loadGlobalScores() {
+            const scoresRef = dbRef(db, 'scores');
+            const topScoresQuery = dbQuery(scoresRef, 
+                dbOrderByChild('score'), 
+                dbLimitToLast(5)
+            );
+            
+            dbOnValue(topScoresQuery, (snapshot) => {
+                const scores = [];
+                snapshot.forEach((childSnapshot) => {
+                    scores.unshift(childSnapshot.val());
+                });
+                
+                const scoreList = document.getElementById('scoreList');
+                scoreList.innerHTML = scores
+                    .map((score, index) => `
+                        <li>${index + 1}. ${score.name}: ${score.score}</li>
+                    `)
+                    .join('');
+            });
+        }
     </script>
 
     <footer class="footer">
