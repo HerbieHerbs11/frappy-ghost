@@ -734,34 +734,57 @@
             document.body.style.overflow = 'auto';
         }
 
-        // Update the canvas touch event listener
-        canvas.addEventListener('touchstart', function(e) {
-            e.preventDefault();  // Prevent scrolling when touching the canvas
+        // Add this function - it was missing from your code
+        function createPipe() {
+            const minHeight = 50;
+            const maxHeight = canvas.height - PIPE_GAP - minHeight;
+            const topHeight = Math.random() * (maxHeight - minHeight) + minHeight;
             
-            if (!gameStarted) {
-                gameStarted = true;
-                resetGame();
-                // Add this line to start music on first touch
-                if (isMusicOn) {
+            pipes.push({
+                x: canvas.width,
+                topHeight: topHeight,
+                bottomY: topHeight + PIPE_GAP
+            });
+        }
+
+        // Update the event listeners to prevent conflicts
+        // Remove any duplicate event listeners and keep only these:
+        document.addEventListener('keydown', function(e) {
+            if (modalOverlay.style.display === 'flex') {
+                return; // Don't handle game input when modal is open
+            }
+            
+            if (e.code === 'Space') {
+                e.preventDefault(); // Prevent page scrolling
+                handleJump();
+                // Start music when game starts
+                if (!gameStarted && isMusicOn) {
                     playGameMusic();
                 }
-            } else if (gameOver) {
-                resetGame();
-            } else {
-                bird.velocity = bird.jump;
-                bird.hasJumped = true;
-                bird.gravity = bird.normalGravity;
+            } else if (e.code === 'KeyM') {
+                isSoundOn = !isSoundOn;
+                updateButtonStates();
+            } else if (e.code === 'KeyB') {
+                toggleMusic();
+                updateButtonStates();
+            }
+        });
+
+        // Update the canvas touch event listener
+        canvas.addEventListener('touchstart', function(e) {
+            if (modalOverlay.style.display === 'flex') {
+                return; // Don't handle game input when modal is open
+            }
+            
+            e.preventDefault();  // Prevent scrolling when touching the canvas
+            handleJump();
+            // Start music when game starts on mobile
+            if (!gameStarted && isMusicOn) {
+                playGameMusic();
             }
         }, false);
 
-        // Add this to prevent default touch behavior
-        document.addEventListener('touchmove', function(e) {
-            if (e.target == canvas) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-
-        // Add jump handler function
+        // Make sure handleJump function is updated
         function handleJump() {
             if (!gameStarted) {
                 gameStarted = true;
