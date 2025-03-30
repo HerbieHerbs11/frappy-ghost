@@ -397,6 +397,37 @@
         }
     </style>
     <link rel="preload" href="FONT Press 2P/PressStart2P-Regular.woff2" as="font" type="font/woff2" crossorigin>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+      import { getDatabase, ref, push, onValue, query, orderByChild, limitToLast } 
+        from "https://www.gstatic.com/firebasejs/11.5.0/firebase-database.js";
+
+      // Initialize Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyDPukoU3jTPlbXs_EzFL0tJBOJxZrJWUvk",
+        authDomain: "frappy-ghost-2261b.firebaseapp.com",
+        databaseURL: "https://frappy-ghost-2261b-default-rtdb.firebaseio.com",
+        projectId: "frappy-ghost-2261b",
+        storageBucket: "frappy-ghost-2261b.firebasestorage.app",
+        messagingSenderId: "21698071950",
+        appId: "1:21698071950:web:412557e4fc088ee58528df",
+        measurementId: "G-EJC6F5PR9F"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+
+      // Make Firebase functions available globally
+      window.firebaseDB = {
+        db: db,
+        ref: ref,
+        push: push,
+        onValue: onValue,
+        query: query,
+        orderByChild: orderByChild,
+        limitToLast: limitToLast
+      };
+    </script>
 </head>
 <body>
     <!-- Update background image source to the new static image -->
@@ -465,39 +496,6 @@
         <button class="control-button active" id="soundToggle">🔊</button>
         <button class="control-button active" id="musicToggle">♪</button>
     </div>
-
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
-      import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-analytics.js";
-      import { getDatabase, ref, push, onValue, query, orderByChild, limitToLast } 
-        from "https://www.gstatic.com/firebasejs/11.5.0/firebase-database.js";
-
-      // Initialize Firebase first
-      const firebaseConfig = {
-        apiKey: "AIzaSyDPukoU3jTPlbXs_EzFL0tJBOJxZrJWUvk",
-        authDomain: "frappy-ghost-2261b.firebaseapp.com",
-        databaseURL: "https://frappy-ghost-2261b-default-rtdb.firebaseio.com",
-        projectId: "frappy-ghost-2261b",
-        storageBucket: "frappy-ghost-2261b.firebasestorage.app",
-        messagingSenderId: "21698071950",
-        appId: "1:21698071950:web:412557e4fc088ee58528df",
-        measurementId: "G-EJC6F5PR9F"
-      };
-
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const analytics = getAnalytics(app);
-      const db = getDatabase(app);
-
-      // Make Firebase instances available globally
-      window.db = db;
-      window.dbRef = ref;
-      window.dbPush = push;
-      window.dbQuery = query;
-      window.dbOrderByChild = orderByChild;
-      window.dbLimitToLast = limitToLast;
-      window.dbOnValue = onValue;
-    </script>
 
     <script>
         // Replace with the original initialization
@@ -948,6 +946,7 @@
         }
 
         function submitScore() {
+            const { db, ref, push } = window.firebaseDB;
             const playerName = playerNameInput.value.trim() || 'Ghost';
             if (pendingScore > 0) {
                 // Save to local storage
@@ -957,8 +956,8 @@
                 localStorage.setItem('flappyHighScores', JSON.stringify(highScores));
 
                 // Save to Firebase
-                const scoresRef = dbRef(db, 'scores');
-                dbPush(scoresRef, {
+                const scoresRef = ref(db, 'scores');
+                push(scoresRef, {
                     name: playerName,
                     score: pendingScore,
                     timestamp: Date.now()
@@ -1143,19 +1142,19 @@
         }
 
         function loadGlobalScores() {
-            const scoresRef = dbRef(db, 'scores');
-            const topScoresQuery = dbQuery(scoresRef, 
-                dbOrderByChild('score'), 
-                dbLimitToLast(5)
+            const { db, ref, query, orderByChild, limitToLast, onValue } = window.firebaseDB;
+            const scoresRef = ref(db, 'scores');
+            const topScoresQuery = query(scoresRef, 
+                orderByChild('score'), 
+                limitToLast(5)
             );
             
-            dbOnValue(topScoresQuery, (snapshot) => {
+            onValue(topScoresQuery, (snapshot) => {
                 const scores = [];
                 snapshot.forEach((childSnapshot) => {
                     scores.unshift(childSnapshot.val());
                 });
                 
-                const scoreList = document.getElementById('scoreList');
                 scoreList.innerHTML = scores
                     .map((score, index) => `
                         <li>${index + 1}. ${score.name}: ${score.score}</li>
