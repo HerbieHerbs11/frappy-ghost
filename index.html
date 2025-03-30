@@ -912,19 +912,23 @@
             }
         });
 
-        // Add touch controls
+        // Update the canvas touch event listener
         canvas.addEventListener('touchstart', function(e) {
             e.preventDefault();  // Prevent scrolling when touching the canvas
             
             if (!gameStarted) {
                 gameStarted = true;
                 resetGame();
+                // Add this line to start music on first touch
+                if (isMusicOn) {
+                    playGameMusic();
+                }
             } else if (gameOver) {
                 resetGame();
             } else {
                 bird.velocity = bird.jump;
-                bird.hasJumped = true;  // Mark that the bird has jumped
-                bird.gravity = bird.normalGravity;  // Reset to normal gravity
+                bird.hasJumped = true;
+                bird.gravity = bird.normalGravity;
             }
         }, false);
 
@@ -944,8 +948,8 @@
                 resetGame();
             } else {
                 bird.velocity = bird.jump;
-                bird.hasJumped = true;  // Mark that the bird has jumped
-                bird.gravity = bird.normalGravity;  // Reset to normal gravity
+                bird.hasJumped = true;
+                bird.gravity = bird.normalGravity;
             }
         }
 
