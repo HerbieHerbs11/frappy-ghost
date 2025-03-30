@@ -397,37 +397,6 @@
         }
     </style>
     <link rel="preload" href="FONT Press 2P/PressStart2P-Regular.woff2" as="font" type="font/woff2" crossorigin>
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
-      import { getDatabase, ref, push, onValue, query, orderByChild, limitToLast } 
-        from "https://www.gstatic.com/firebasejs/11.5.0/firebase-database.js";
-
-      // Initialize Firebase
-      const firebaseConfig = {
-        apiKey: "AIzaSyDPukoU3jTPlbXs_EzFL0tJBOJxZrJWUvk",
-        authDomain: "frappy-ghost-2261b.firebaseapp.com",
-        databaseURL: "https://frappy-ghost-2261b-default-rtdb.firebaseio.com",
-        projectId: "frappy-ghost-2261b",
-        storageBucket: "frappy-ghost-2261b.firebasestorage.app",
-        messagingSenderId: "21698071950",
-        appId: "1:21698071950:web:412557e4fc088ee58528df",
-        measurementId: "G-EJC6F5PR9F"
-      };
-
-      const app = initializeApp(firebaseConfig);
-      const db = getDatabase(app);
-
-      // Make Firebase functions available globally
-      window.firebaseDB = {
-        db: db,
-        ref: ref,
-        push: push,
-        onValue: onValue,
-        query: query,
-        orderByChild: orderByChild,
-        limitToLast: limitToLast
-      };
-    </script>
 </head>
 <body>
     <!-- Update background image source to the new static image -->
@@ -946,7 +915,6 @@
         }
 
         function submitScore() {
-            const { db, ref, push } = window.firebaseDB;
             const playerName = playerNameInput.value.trim() || 'Ghost';
             if (pendingScore > 0) {
                 // Save to local storage
@@ -956,8 +924,7 @@
                 localStorage.setItem('flappyHighScores', JSON.stringify(highScores));
 
                 // Save to Firebase
-                const scoresRef = ref(db, 'scores');
-                push(scoresRef, {
+                db.ref('scores').push({
                     name: playerName,
                     score: pendingScore,
                     timestamp: Date.now()
@@ -1142,26 +1109,44 @@
         }
 
         function loadGlobalScores() {
-            const { db, ref, query, orderByChild, limitToLast, onValue } = window.firebaseDB;
-            const scoresRef = ref(db, 'scores');
-            const topScoresQuery = query(scoresRef, 
-                orderByChild('score'), 
-                limitToLast(5)
-            );
-            
-            onValue(topScoresQuery, (snapshot) => {
-                const scores = [];
-                snapshot.forEach((childSnapshot) => {
-                    scores.unshift(childSnapshot.val());
+            const scoresRef = db.ref('scores');
+            scoresRef.orderByChild('score')
+                .limitToLast(5)
+                .on('value', (snapshot) => {
+                    const scores = [];
+                    snapshot.forEach((childSnapshot) => {
+                        scores.unshift(childSnapshot.val());
+                    });
+                    
+                    scoreList.innerHTML = scores
+                        .map((score, index) => `
+                            <li>${index + 1}. ${score.name}: ${score.score}</li>
+                        `)
+                        .join('');
                 });
-                
-                scoreList.innerHTML = scores
-                    .map((score, index) => `
-                        <li>${index + 1}. ${score.name}: ${score.score}</li>
-                    `)
-                    .join('');
-            });
         }
+    </script>
+
+    <!-- Add these right after your audio elements -->
+    <script src="https://www.gstatic.com/firebasejs/11.5.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.5.0/firebase-database-compat.js"></script>
+
+    <script>
+      // Initialize Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyDPukoU3jTPlbXs_EzFL0tJBOJxZrJWUvk",
+        authDomain: "frappy-ghost-2261b.firebaseapp.com",
+        databaseURL: "https://frappy-ghost-2261b-default-rtdb.firebaseio.com",
+        projectId: "frappy-ghost-2261b",
+        storageBucket: "frappy-ghost-2261b.firebasestorage.app",
+        messagingSenderId: "21698071950",
+        appId: "1:21698071950:web:412557e4fc088ee58528df",
+        measurementId: "G-EJC6F5PR9F"
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database();
     </script>
 
     <footer class="footer">
