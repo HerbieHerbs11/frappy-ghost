@@ -555,20 +555,21 @@
         function resetGame() {
             bird.y = 200;
             bird.velocity = 0;
-            bird.gravity = bird.initialGravity;  // Reset to initial gravity
-            bird.hasJumped = false;  // Reset jump state
+            bird.gravity = bird.initialGravity;
+            bird.hasJumped = false;
             pipes.length = 0;
             score = 0;
             gameOver = false;
             sparkles.length = 0;
             
-            // Handle music on reset
+            // Only restart music if game is already started and music is on
             if (isMusicOn && gameStarted) {
                 stopGameMusic();
-                playGameMusic();
+                // Small delay to ensure proper restart
+                setTimeout(() => {
+                    playGameMusic();
+                }, 100);
             }
-            
-            update();
         }
 
         // Update the keydown event listener
@@ -912,19 +913,23 @@
             }
         });
 
-        // Add touch controls
+        // Update the touch event listener for mobile
         canvas.addEventListener('touchstart', function(e) {
             e.preventDefault();  // Prevent scrolling when touching the canvas
             
             if (!gameStarted) {
                 gameStarted = true;
                 resetGame();
+                // Start music on first touch for mobile
+                if (isMusicOn) {
+                    playGameMusic();
+                }
             } else if (gameOver) {
                 resetGame();
             } else {
                 bird.velocity = bird.jump;
-                bird.hasJumped = true;  // Mark that the bird has jumped
-                bird.gravity = bird.normalGravity;  // Reset to normal gravity
+                bird.hasJumped = true;
+                bird.gravity = bird.normalGravity;
             }
         }, false);
 
@@ -944,8 +949,8 @@
                 resetGame();
             } else {
                 bird.velocity = bird.jump;
-                bird.hasJumped = true;  // Mark that the bird has jumped
-                bird.gravity = bird.normalGravity;  // Reset to normal gravity
+                bird.hasJumped = true;
+                bird.gravity = bird.normalGravity;
             }
         }
 
@@ -983,13 +988,21 @@
         function playGameMusic() {
             if (!isMusicOn) return;
             
-            // Set up the music chain
-            introMusic.play().catch(e => console.log("Music play failed:", e));
+            // Make sure both audio elements are ready
+            introMusic.load();
+            loopMusic.load();
+            
+            // Play intro music with promise handling
+            introMusic.play().catch(error => {
+                console.log("Music play failed, likely needs user interaction first:", error);
+            });
             
             // When intro ends, start the loop music
-            introMusic.addEventListener('ended', () => {
-                loopMusic.play().catch(e => console.log("Music play failed:", e));
-            });
+            introMusic.onended = () => {
+                loopMusic.play().catch(error => {
+                    console.log("Loop music play failed:", error);
+                });
+            };
         }
 
         // Function to stop all music
@@ -1044,6 +1057,15 @@
         document.getElementById('musicToggle').addEventListener('click', function() {
             toggleMusic();
             updateButtonStates();
+            
+            // If turning music on and game is started, try to play
+            if (isMusicOn && gameStarted) {
+                if (introMusic.ended) {
+                    loopMusic.play().catch(e => console.log("Music toggle failed:", e));
+                } else {
+                    playGameMusic();
+                }
+            }
         });
 
         // Call this initially to set the correct state
