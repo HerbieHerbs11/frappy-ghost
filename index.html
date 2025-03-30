@@ -879,6 +879,9 @@
             if (!isMobileDevice()) {
                 playerNameInput.focus();
             }
+
+            // Prevent scrolling of background when modal is open
+            document.body.style.overflow = 'hidden';
         }
 
         function submitScore() {
@@ -900,17 +903,12 @@
             }
         });
 
-        // Add close modal function
+        // Update the closeModal function
         function closeModal() {
             modalOverlay.style.display = 'none';
+            // Re-enable scrolling when modal is closed
+            document.body.style.overflow = 'auto';
         }
-
-        // Add click outside to close
-        modalOverlay.addEventListener('click', function(event) {
-            if (event.target === modalOverlay) {
-                closeModal();
-            }
-        });
 
         // Update the canvas touch event listener
         canvas.addEventListener('touchstart', function(e) {
