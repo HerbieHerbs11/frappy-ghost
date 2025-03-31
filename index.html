@@ -607,8 +607,11 @@
             if (!isMobileDevice()) {
                 playerNameInput.focus();
             }
-            // Prevent scrolling of background when modal is open
-            document.body.style.overflow = 'hidden';
+
+            // Make sure keyboard appears on mobile
+            if (isMobileDevice()) {
+                playerNameInput.click();
+            }
         }
 
         // Add these new functions
@@ -649,8 +652,8 @@
                 })
                 .catch(error => {
                     console.error("Error loading scores:", error);
-                    // Show a fallback message if loading fails
-                    scoreList.innerHTML = '<li>Unable to load global scores</li>';
+                    const scoreList = document.getElementById('scoreList');
+                    scoreList.innerHTML = '<li>Unable to load global scores. Please try again.</li>';
                 });
         }
 
@@ -664,18 +667,20 @@
                 highScores = highScores.slice(0, 5);
                 localStorage.setItem('flappyHighScores', JSON.stringify(highScores));
 
-                // Save to Firebase
+                // Save to Firebase - add error handling and confirmation
                 const scoresRef = firebase.database().ref('scores');
                 scoresRef.push({
                     name: playerName,
                     score: pendingScore,
                     timestamp: Date.now()
                 }).then(() => {
+                    console.log('Score saved successfully!');
                     displayHighScores();
                     modalOverlay.style.display = 'none';
                     document.body.style.overflow = 'auto';
                 }).catch(error => {
                     console.error("Error saving score:", error);
+                    alert('Error saving score. Please try again.');
                 });
             }
         }
